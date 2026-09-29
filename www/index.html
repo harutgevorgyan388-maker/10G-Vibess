@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Чат</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #eceff1; }
+        #chat-box { height: 80vh; overflow-y: auto; background: white; padding: 10px; border-radius: 8px; }
+        .msg { background: #e1f5fe; padding: 8px 12px; margin: 5px 0; border-radius: 6px; width: fit-content; max-width: 80%; }
+        .input-area { display: flex; margin-top: 10px; gap: 5px; }
+        input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; font-size: 16px; background: #0288d1; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="chat-box"></div>
+<div class="input-area">
+    <input type="text" id="messageInput" placeholder="Введите сообщение...">
+    <button onclick="sendMessage()">></button>
+</div>
+
+<!-- Подключаем Firebase SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ИЗ FIREBASE
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const messagesRef = collection(db, "messages");
+
+    // Отправка сообщения
+    window.sendMessage = async function() {
+        const input = document.getElementById("messageInput");
+        if (input.value.trim() !== "") {
+            await addDoc(messagesRef, {
+                text: input.value,
+                timestamp: new Date()
+            });
+            input.value = "";
+        }
+    }
+
+    // Слушатель новых сообщений в реальном времени
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    onSnapshot(q, (snapshot) => {
+        const chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = "msg";
+            msgDiv.textContent = doc.data().text;
+            chatBox.appendChild(msgDiv);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+</script>
+
+</body>
+</html>
